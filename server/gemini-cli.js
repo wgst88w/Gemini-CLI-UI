@@ -350,14 +350,14 @@ async function spawnGemini(command, options = {}, ws) {
       // Clean up temporary image files if any
       if (geminiProcess.tempImagePaths && geminiProcess.tempImagePaths.length > 0) {
         for (const imagePath of geminiProcess.tempImagePaths) {
-          await fs.unlink(imagePath).catch(err => 
+          await fs.unlink(imagePath).catch(err => {
             // console.error(`Failed to delete temp image ${imagePath}:`, err)
-          );
+          });
         }
         if (geminiProcess.tempDir) {
-          await fs.rm(geminiProcess.tempDir, { recursive: true, force: true }).catch(err => 
+          await fs.rm(geminiProcess.tempDir, { recursive: true, force: true }).catch(err => {
             // console.error(`Failed to delete temp directory ${geminiProcess.tempDir}:`, err)
-          );
+          });
         }
       }
       
