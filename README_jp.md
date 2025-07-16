@@ -9,23 +9,23 @@
 ## Screenshots
 
 <div align="center">
-  
 <table>
 <tr>
 <td align="center">
-<h3>Desktop View</h3>
+<h3>Chat View</h3>
 <img src="public/screenshots/TOP.png" alt="Desktop Interface" width="400">
 <br>
 <em>Main interface showing project overview and chat</em>
 </td>
 <td align="center">
-<h3>Mobile Experience</h3>
+<h3>Setting</h3>
 <img src="public/screenshots/Setting.png" alt="Mobile Interface" width="400">
 <br>
 <em>Setting</em>
 </td>
 </tr>
 </table>
+</div align="center">
 
 ## 機能
 
