@@ -43,7 +43,7 @@ A desktop and mobile UI for [Gemini CLI](https://github.com/google-gemini/gemini
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) v20 or higher
-- [Gemini CLI](https://github.com/google/generative-ai-docs) installed and configured
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed and configured
 
 ### Installation
 

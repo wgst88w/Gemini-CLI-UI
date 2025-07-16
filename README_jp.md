@@ -43,7 +43,7 @@
 ### 前提条件
 
 - [Node.js](https://nodejs.org/) v20以上
-- [Gemini CLI](https://github.com/google/generative-ai-docs)がインストールされ、設定済みであること
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli)がインストールされ、設定済みであること
 
 ### インストール
 
