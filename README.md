@@ -6,213 +6,246 @@
   </p>
 </div>
 
-A desktop and mobile UI for [Gemini CLI](https://github.com/google-gemini/gemini-cli), Google's official CLI for AI-assisted coding. You can use it locally or remotely to view your active projects and sessions in Gemini CLI and make changes to them the same way you would do it in Gemini CLI. This gives you a proper interface that works everywhere.
+[Gemini CLI](https://github.com/google-gemini/gemini-cli) GoogleのAI支援コーディング用公式CLIのデスクトップ・モバイル対応UIです。ローカルまたはリモートで使用でき、Gemini CLIのアクティブなプロジェクトとセッションを表示し、CLIと同じように変更を加えることができます。どこでも動作する適切なインターフェースを提供します。
 
-## Features
 
-- **Responsive Design** - Works seamlessly across desktop, tablet, and mobile so you can also use Gemini CLI from mobile
-- **Interactive Chat Interface** - Built-in chat interface for seamless communication with Gemini CLI
-- **Integrated Shell Terminal** - Direct access to Gemini CLI through built-in shell functionality
-- **File Explorer** - Interactive file tree with syntax highlighting and live editing
-- **Git Explorer** - View, stage and commit your changes. You can also switch branches
-- **Session Management** - Resume conversations, manage multiple sessions, and track history
-- **Model Selection** - Choose from multiple Gemini models including Gemini 2.5 Pro
-- **YOLO Mode** - Skip confirmation prompts for faster operations (use with caution)
+## 機能
 
-## Quick Start
+- **レスポンシブデザイン** - デスクトップ、タブレット、モバイルでシームレスに動作し、モバイルからもGemini CLIを使用可能
+- **インタラクティブなチャットインターフェース** - Gemini CLIとのシームレスな通信のための組み込みチャットインターフェース
+- **統合シェルターミナル** - 組み込みシェル機能によるGemini CLIへの直接アクセス
+- **ファイルエクスプローラー** - シンタックスハイライトとライブ編集機能を備えたインタラクティブなファイルツリー
+- **Gitエクスプローラー** - 変更の表示、ステージング、コミット。ブランチの切り替えも可能
+- **セッション管理** - 会話の再開、複数セッションの管理、履歴の追跡
+- **モデル選択** - Gemini 2.5 Proを含む複数のGeminiモデルから選択可能
+- **YOLOモード** - 確認プロンプトをスキップして高速操作（注意して使用）
 
-### Prerequisites
+## クイックスタート
 
-- [Node.js](https://nodejs.org/) v20 or higher
-- [Gemini CLI](https://github.com/google/generative-ai-docs) installed and configured
+### 前提条件
 
-### Installation
+- [Node.js](https://nodejs.org/) v20以上
+- [Gemini CLI](https://github.com/google/generative-ai-docs)がインストールされ、設定済みであること
 
-1. **Clone the repository:**
+### インストール
+
+1. **リポジトリをクローン：**
 ```bash
 git clone git@github.com:cruzyjapan/Gemini-CLI-UI.git
 cd geminicliui
 ```
 
-2. **Install dependencies:**
+2. **依存関係をインストール：**
 ```bash
 npm install
 ```
 
-3. **Configure environment:**
+3. **環境設定：**
 ```bash
 cp .env.example .env
-# Edit .env with your preferred settings
+# お好みの設定で.envを編集
 ```
 
-**Note**: The `.env` file has been removed for security. Always copy `.env.example` to `.env` when using and modify settings as needed.
+**注意**: `.env`ファイルはセキュリティのため削除されています。使用時は必ず`.env.example`をコピーして`.env`を作成し、必要に応じて設定を変更してください。
 
-4. **Start the application:**
+4. **アプリケーションを起動：**
 ```bash
-# Development mode (with hot reload)
+# 開発モード（ホットリロード付き）
 npm run dev
 ```
-The application will start at the port you specified in your .env
+アプリケーションは.envで指定したポートで起動します
 
-5. **Open your browser:**
-   - Development: `http://localhost:4009`
+5. **ブラウザを開く：**
+   - 開発環境: `http://localhost:4009`
 
-## Security & Tools Configuration
+## セキュリティとツール設定
 
-**🔒 Important Notice**: All Gemini CLI tools are **disabled by default**. This prevents potentially harmful operations from running automatically.
+**🔒 重要なお知らせ**: すべてのGemini CLIツールは**デフォルトで無効**になっています。これにより、潜在的に有害な操作が自動的に実行されることを防ぎます。
 
-### Enabling Tools
+### ツールの有効化
 
-To use Gemini CLI's full functionality, you'll need to manually enable tools:
+Gemini CLIの全機能を使用するには、手動でツールを有効にする必要があります：
 
-1. **Open Tools Settings** - Click the gear icon in the sidebar
-2. **Enable Selectively** - Turn on only the tools you need
-3. **Apply Settings** - Your preferences are saved locally
+1. **ツール設定を開く** - サイドバーの歯車アイコンをクリック
+2. **必要に応じて有効化** - 必要なツールのみをオンにする
+3. **設定を適用** - 設定はローカルに保存されます
 
-### About YOLO Mode
 
-YOLO mode ("You Only Live Once") is equivalent to Gemini CLI's `--yolo` flag, skipping all confirmation prompts. This mode speeds up your work but should be used with caution.
+### YOLOモードについて
 
-**Recommended approach**: Start with basic tools enabled and add more as needed. You can always adjust these settings later.
+YOLOモード（「You Only Live Once」）は、Gemini CLIの `--yolo` フラグに相当し、すべての確認プロンプトをスキップします。このモードは作業を高速化しますが、注意して使用してください。
 
-## Usage Guide
+**推奨アプローチ**: 基本的なツールから始めて、必要に応じて追加していきます。設定はいつでも調整できます。
 
-### Core Features
+## 使用ガイド
 
-#### Project Management
-The UI automatically discovers Gemini CLI projects from `~/.gemini/projects/` and provides:
-- **Visual Project Browser** - All available projects with metadata and session counts
-- **Project Actions** - Rename, delete, and organize projects
-- **Smart Navigation** - Quick access to recent projects and sessions
+### コア機能
 
-#### Chat Interface
-- **Use responsive chat or Gemini CLI** - You can either use the adapted chat interface or use the shell button to connect to Gemini CLI
-- **Real-time Communication** - Stream responses from Gemini with WebSocket connection
-- **Session Management** - Resume previous conversations or start fresh sessions
-- **Message History** - Complete conversation history with timestamps and metadata
-- **Multi-format Support** - Text, code blocks, and file references
-- **Image Upload** - Upload and ask questions about images in chat
+#### プロジェクト管理
+UIは `~/.gemini/projects/` からGemini CLIプロジェクトを自動的に検出し、以下を提供します：
+- **ビジュアルプロジェクトブラウザー** - メタデータとセッション数を含むすべての利用可能なプロジェクト
+- **プロジェクトアクション** - プロジェクトの名前変更、削除、整理
+- **スマートナビゲーション** - 最近のプロジェクトとセッションへのクイックアクセス
 
-#### File Explorer & Editor
-- **Interactive File Tree** - Browse project structure with expand/collapse navigation
-- **Live File Editing** - Read, modify, and save files directly in the interface
-- **Syntax Highlighting** - Support for multiple programming languages
-- **File Operations** - Create, rename, delete files and directories
+#### チャットインターフェース
+- **レスポンシブチャットまたはGemini CLIを使用** - 適応されたチャットインターフェースを使用するか、シェルボタンを使用してGemini CLIに接続できます
+- **リアルタイム通信** - WebSocket接続によるGeminiからのストリームレスポンス
+- **セッション管理** - 以前の会話を再開するか、新しいセッションを開始
+- **メッセージ履歴** - タイムスタンプとメタデータを含む完全な会話履歴
+- **マルチフォーマットサポート** - テキスト、コードブロック、ファイル参照
+- **画像添付** - チャットで画像をアップロードして質問可能
 
-#### Git Explorer
-- **Visualize Changes** - See current changes in real-time
-- **Stage and Commit** - Create Git commits directly from the UI
-- **Branch Management** - Switch and manage branches
+#### ファイルエクスプローラーとエディター
+- **インタラクティブファイルツリー** - 展開/折りたたみナビゲーションでプロジェクト構造を閲覧
+- **ライブファイル編集** - インターフェース内で直接ファイルを読み取り、変更、保存
+- **シンタックスハイライト** - 複数のプログラミング言語をサポート
+- **ファイル操作** - ファイルとディレクトリの作成、名前変更、削除
 
-#### Session Management
-- **Session Persistence** - All conversations automatically saved
-- **Session Organization** - Group sessions by project and timestamp
-- **Session Actions** - Rename, delete, and export conversation history
-- **Cross-device Sync** - Access sessions from any device
+#### Gitエクスプローラー
+- **変更の可視化** - 現在の変更をリアルタイムで表示
+- **ステージングとコミット** - UIから直接Gitコミットを作成
+- **ブランチ管理** - ブランチの切り替えと管理
 
-### Mobile App
-- **Responsive Design** - Optimized for all screen sizes
-- **Touch-friendly Interface** - Swipe gestures and touch navigation
-- **Mobile Navigation** - Bottom tab bar for easy thumb navigation
-- **Adaptive Layout** - Collapsible sidebar and smart content prioritization
-- **Add to Home Screen** - Add a shortcut to your home screen and the app will behave like a PWA
+#### セッション管理
+- **セッション永続性** - すべての会話を自動的に保存
+- **セッション整理** - プロジェクトとタイムスタンプでセッションをグループ化
+- **セッションアクション** - 会話履歴の名前変更、削除、エクスポート
+- **クロスデバイス同期** - どのデバイスからでもセッションにアクセス
 
-## Architecture
+### モバイルアプリ
+- **レスポンシブデザイン** - すべての画面サイズに最適化
+- **タッチフレンドリーインターフェース** - スワイプジェスチャーとタッチナビゲーション
+- **モバイルナビゲーション** - 簡単な親指ナビゲーションのための下部タブバー
+- **適応レイアウト** - 折りたたみ可能なサイドバーとスマートコンテンツの優先順位付け
+- **ホーム画面にショートカットを追加** - ホーム画面にショートカットを追加すると、アプリはPWAのように動作します
 
-### System Overview
+## アーキテクチャ
+
+### システム概要
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │  Gemini CLI     │
-│   (React/Vite)  │◄──►│ (Express/WS)    │◄──►│  Integration    │
+│   フロントエンド   │    │   バックエンド    │    │  Gemini CLI     │
+│   (React/Vite)  │◄──►│ (Express/WS)    │◄──►│  統合           │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### Backend (Node.js + Express)
-- **Express Server** - RESTful API with static file serving (Port: 4008)
-- **WebSocket Server** - Communication for chats and project refresh
-- **Gemini CLI Integration** - Process spawning and management
-- **Session Management** - JSONL parsing and conversation persistence
-- **File System API** - Exposing file browser for projects
-- **Authentication System** - Secure login and session management (SQLite database: geminicliui_auth.db)
+### バックエンド（Node.js + Express）
+- **Expressサーバー** - 静的ファイルサービングを備えたRESTful API（ポート: 4008）
+- **WebSocketサーバー** - チャットとプロジェクト更新のための通信
+- **Gemini CLI統合** - プロセスの生成と管理
+- **セッション管理** - JSONLパースと会話の永続化
+- **ファイルシステムAPI** - プロジェクト用のファイルブラウザーを公開
+- **認証システム** - セキュアなログインとセッション管理（SQLiteデータベース: geminicliui_auth.db）
 
-### Frontend (React + Vite)
-- **React 18** - Modern component architecture with hooks
-- **CodeMirror** - Advanced code editor with syntax highlighting
-- **Tailwind CSS** - Utility-first CSS framework
-- **Responsive Design** - Mobile-first approach
+### フロントエンド（React + Vite）
+- **React 18** - フックを使用したモダンなコンポーネントアーキテクチャ
+- **CodeMirror** - シンタックスハイライト付きの高度なコードエディター
+- **Tailwind CSS** - ユーティリティファーストのCSSフレームワーク
+- **レスポンシブデザイン** - モバイルファーストのアプローチ
 
-## Configuration Details
+## 設定詳細
 
-### Port Settings
-- **API Server**: Port 4008 (default)
-- **Frontend Dev Server**: Port 4009 (default)
-- These ports can be changed in the `.env` file
+### ポート設定
+- **APIサーバー**: 4008番ポート（デフォルト）
+- **フロントエンド開発サーバー**: 4009番ポート（デフォルト）
+- これらのポートは`.env`ファイルで変更可能です
 
-### Database Configuration
-- **Database Name**: `geminicliui_auth.db`
-- **User Table**: `geminicliui_users`
-- SQLite database is automatically initialized on server startup
+### データベース設定
 
-## Troubleshooting
+#### 初期設定とテーブル構造
+- **データベースファイル**: `server/database/geminicliui_auth.db`
+- **データベースタイプ**: SQLite 3
+- **初期化**: サーバー起動時に自動的に作成・初期化されます
 
-### Common Issues & Solutions
+#### ユーザーテーブル詳細
 
-#### "No Gemini projects found"
-**Problem**: The UI shows no projects or empty project list
-**Solutions**:
-- Ensure Gemini CLI is properly installed
-- Run `gemini` command in at least one project directory to initialize
-- Verify `~/.gemini/projects/` directory exists and has proper permissions
+**テーブル名**: `geminicliui_users`
 
-#### File Explorer Issues
-**Problem**: Files not loading, permission errors, empty directories
-**Solutions**:
-- Check project directory permissions (`ls -la` in terminal)
-- Verify the project path exists and is accessible
-- Review server console logs for detailed error messages
-- Ensure you're not trying to access system directories outside project scope
+| カラム名 | データ型 | 制約 | 説明 |
+|---------|----------|------|------|
+| `id` | INTEGER | PRIMARY KEY AUTOINCREMENT | ユーザーの一意識別子 |
+| `username` | TEXT | UNIQUE NOT NULL | ログインユーザー名（メールアドレス推奨） |
+| `password_hash` | TEXT | NOT NULL | bcryptでハッシュ化されたパスワード |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | アカウント作成日時 |
+| `last_login` | DATETIME | NULL | 最終ログイン日時 |
+| `is_active` | BOOLEAN | DEFAULT 1 | アカウントの有効/無効状態 |
 
-#### Model Selection Not Working
-**Problem**: Selected model is not being used
-**Solutions**:
-- After selecting a model in settings, make sure to click "Save Settings"
-- Clear browser local storage and reconfigure
-- Verify the model name is displayed correctly in the chat interface
+**インデックス**:
+- `idx_geminicliui_users_username`: ユーザー名での高速検索用
+- `idx_geminicliui_users_active`: アクティブユーザーのフィルタリング用
 
-## License
+#### 初回起動時の設定
+1. サーバー初回起動時、データベースファイルが存在しない場合は自動作成
+2. `server/database/init.sql` からテーブル構造を読み込み
+3. 初回アクセス時にユーザー登録画面が表示される
+4. 最初のユーザーが管理者として登録される
 
-GNU General Public License v3.0 - see [LICENSE](LICENSE) file for details.
+#### セキュリティ機能
+- パスワードは bcrypt でハッシュ化して保存
+- JWT トークンベースの認証システム
+- セッション管理とタイムアウト機能
+- SQLインジェクション対策（プリペアドステートメント使用）
 
-This project is open source and free to use, modify, and distribute under the GPL v3 license.
+## トラブルシューティング
 
-### Original Project
+### よくある問題と解決策
 
-This project is based on [Claude Code UI](https://github.com/siteboon/claudecodeui) (GPL v3.0) with customizations.
+#### "Geminiプロジェクトが見つかりません"
+**問題**: UIにプロジェクトが表示されない、またはプロジェクトリストが空
+**解決策**:
+- Gemini CLIが適切にインストールされていることを確認
+- 少なくとも1つのプロジェクトディレクトリで`gemini`コマンドを実行して初期化
+- `~/.gemini/projects/`ディレクトリが存在し、適切な権限があることを確認
 
-**Major Changes:**
-- Adapted from Claude CLI to Gemini CLI
-- Added authentication system (SQLite-based)
-- Gemini-specific model selection feature
-- Enhanced Japanese language support
-- UI adjustments and Gemini branding
+#### ファイルエクスプローラーの問題
+**問題**: ファイルが読み込まれない、権限エラー、空のディレクトリ
+**解決策**:
+- プロジェクトディレクトリの権限を確認（ターミナルで`ls -la`）
+- プロジェクトパスが存在し、アクセス可能であることを確認
+- 詳細なエラーメッセージについてサーバーコンソールログを確認
+- プロジェクトスコープ外のシステムディレクトリにアクセスしようとしていないか確認
 
-Thanks to the original Claude Code UI project.
+#### モデル選択が機能しない
+**問題**: 選択したモデルが使用されない
+**解決策**:
+- 設定でモデルを選択後、必ず「設定を保存」をクリック
+- ブラウザのローカルストレージをクリアして再度設定
+- チャット画面でモデル名が正しく表示されているか確認
 
-## Acknowledgments
+## ライセンス
 
-### Built With
-- **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** - Google's official CLI
-- **[React](https://react.dev/)** - User interface library
-- **[Vite](https://vitejs.dev/)** - Fast build tool and dev server
-- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
-- **[CodeMirror](https://codemirror.net/)** - Advanced code editor
+GNU General Public License v3.0 - 詳細は[LICENSE](LICENSE)ファイルを参照してください。
 
-## Support & Community
+このプロジェクトはオープンソースであり、GPL v3ライセンスの下で自由に使用、変更、配布できます。
 
-### Stay Updated
-- **Star** this repository to show support
-- **Watch** for updates and new releases
-- **Follow** the project for announcements
+### オリジナルプロジェクト
+
+このプロジェクトは[Claude Code UI](https://github.com/siteboon/claudecodeui) (GPL v3.0)をベースにカスタマイズしています。
+
+**主な変更点:**
+- Claude CLIからGemini CLIへの対応変更
+- 認証システムの追加（SQLiteベース）
+- Gemini専用のモデル選択機能
+- 日本語対応の強化
+- UIの調整とGeminiブランディング
+
+オリジナルのClaude Code UIプロジェクトに感謝します。
+
+## 謝辞
+
+### 使用技術
+- **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** - Googleの公式CLI
+- **[React](https://react.dev/)** - ユーザーインターフェースライブラリ
+- **[Vite](https://vitejs.dev/)** - 高速ビルドツールと開発サーバー
+- **[Tailwind CSS](https://tailwindcss.com/)** - ユーティリティファーストのCSSフレームワーク
+- **[CodeMirror](https://codemirror.net/)** - 高度なコードエディター
+
+## サポートとコミュニティ
+
+### 最新情報を入手
+- このリポジトリに**スター**を付けてサポートを表明
+- アップデートと新リリースを**ウォッチ**
+- アナウンスのためにプロジェクトを**フォロー**
 
 ---
