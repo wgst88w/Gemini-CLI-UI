@@ -150,9 +150,40 @@ The UI automatically discovers Gemini CLI projects from `~/.gemini/projects/` an
 - These ports can be changed in the `.env` file
 
 ### Database Configuration
-- **Database Name**: `geminicliui_auth.db`
-- **User Table**: `geminicliui_users`
-- SQLite database is automatically initialized on server startup
+
+#### Initial Setup and Table Structure
+- **Database File**: `server/database/geminicliui_auth.db`
+- **Database Type**: SQLite 3
+- **Initialization**: Automatically created and initialized on server startup
+
+#### User Table Details
+
+**Table Name**: `geminicliui_users`
+
+| Column | Data Type | Constraints | Description |
+|--------|-----------|-------------|-------------|
+| `id` | INTEGER | PRIMARY KEY AUTOINCREMENT | Unique user identifier |
+| `username` | TEXT | UNIQUE NOT NULL | Login username (email recommended) |
+| `password_hash` | TEXT | NOT NULL | bcrypt hashed password |
+| `created_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Account creation timestamp |
+| `last_login` | DATETIME | NULL | Last login timestamp |
+| `is_active` | BOOLEAN | DEFAULT 1 | Account active/inactive status |
+
+**Indexes**:
+- `idx_geminicliui_users_username`: For fast username lookups
+- `idx_geminicliui_users_active`: For filtering active users
+
+#### First Run Setup
+1. On first server startup, database file is automatically created if it doesn't exist
+2. Table structure is loaded from `server/database/init.sql`
+3. First access displays user registration screen
+4. First user is registered as administrator
+
+#### Security Features
+- Passwords are hashed with bcrypt before storage
+- JWT token-based authentication system
+- Session management with timeout functionality
+- SQL injection protection (prepared statements used)
 
 ## Troubleshooting
 
