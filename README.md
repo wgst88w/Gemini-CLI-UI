@@ -25,6 +25,15 @@ A desktop and mobile UI for [Gemini CLI](https://github.com/google-gemini/gemini
 </td>
 </tr>
 </table>
+<table>
+<tr>
+<td align="center">
+<h3>Chat View</h3>
+<img src="public/screenshots/gemini-cli-ui-diagram-en.png" alt="Desktop Interface" width="800">
+<br>
+<em>Gemini CLI UI Diagram</em>
+</td>
+</table>
 </div align="center">
 
 ## Features
