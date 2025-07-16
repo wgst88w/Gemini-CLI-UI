@@ -117,3 +117,18 @@ temp/
 dev.log
 dev_*.log
 *_dev.log
+
+# Test files
+test-*.html
+test-*.js
+test-*.jsx
+*.test.js
+*.test.jsx
+*.spec.js
+*.spec.jsx
+TestApp.jsx
+
+# Project data and sessions (exclude from git)
+projects_data/
+session_data/
+user_uploads/

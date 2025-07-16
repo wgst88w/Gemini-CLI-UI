@@ -42,7 +42,22 @@ function Shell({ selectedProject, selectedSession, isActive }) {
 
   // Connect to shell function
   const connectToShell = () => {
-    if (!isInitialized || isConnected || isConnecting) return;
+    console.log('Connect to shell clicked');
+    
+    // Check auth token first
+    const token = localStorage.getItem('auth-token');
+    if (!token) {
+      console.error('No auth token found');
+      if (terminal.current) {
+        terminal.current.write('\x1b[1;31mAuthentication required. Please log in first.\x1b[0m\r\n');
+      }
+      return;
+    }
+    
+    if (!isInitialized || isConnected || isConnecting) {
+      console.log('Cannot connect:', { isInitialized, isConnected, isConnecting });
+      return;
+    }
     
     setIsConnecting(true);
     
@@ -403,23 +418,25 @@ function Shell({ selectedProject, selectedSession, isActive }) {
         // If the config returns localhost but we're not on localhost, use current host but with API server port
         if (wsBaseUrl.includes('localhost') && !window.location.hostname.includes('localhost')) {
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          // For development, API server is typically on port 3002 when Vite is on 3001
-          const apiPort = window.location.port === '3001' ? '3002' : window.location.port;
+          // For development, API server is typically on port 4008 when Vite is on 4009
+          const apiPort = window.location.port === '4009' ? '4008' : window.location.port;
           wsBaseUrl = `${protocol}//${window.location.hostname}:${apiPort}`;
         }
       } catch (error) {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // For development, API server is typically on port 3002 when Vite is on 3001
-        const apiPort = window.location.port === '3001' ? '3002' : window.location.port;
+        // For development, API server is typically on port 4008 when Vite is on 4009
+        const apiPort = window.location.port === '4009' ? '4008' : window.location.port;
         wsBaseUrl = `${protocol}//${window.location.hostname}:${apiPort}`;
       }
       
       // Include token in WebSocket URL as query parameter
       const wsUrl = `${wsBaseUrl}/shell?token=${encodeURIComponent(token)}`;
+      console.log('Connecting to WebSocket:', wsUrl.replace(/token=.*/, 'token=[REDACTED]'));
       
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
+        console.log('WebSocket connected successfully');
         setIsConnected(true);
         setIsConnecting(false);
         
@@ -433,7 +450,7 @@ function Shell({ selectedProject, selectedSession, isActive }) {
             setTimeout(() => {
               // Send correct session ID from selected session
               const currentSessionId = selectedSession?.id || selectedSession?.sessionId;
-              console.log('🔗 Shell: Initializing with session:', currentSessionId);
+              // console.log('🔗 Shell: Initializing with session:', currentSessionId);
               
               const initPayload = {
                 type: 'init',
@@ -488,6 +505,7 @@ function Shell({ selectedProject, selectedSession, isActive }) {
       };
 
       ws.current.onclose = (event) => {
+        console.log('WebSocket closed:', { code: event.code, reason: event.reason });
         setIsConnected(false);
         setIsConnecting(false);
         
@@ -495,18 +513,29 @@ function Shell({ selectedProject, selectedSession, isActive }) {
         if (terminal.current) {
           terminal.current.clear();
           terminal.current.write('\x1b[2J\x1b[H'); // Clear screen and move cursor to home
+          if (event.code !== 1000) {
+            terminal.current.write(`\x1b[1;31mConnection closed: ${event.reason || 'Unknown error (code: ' + event.code + ')'}\x1b[0m\r\n`);
+          }
         }
         
         // Don't auto-reconnect anymore - user must manually connect
       };
 
       ws.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
         setIsConnected(false);
         setIsConnecting(false);
+        if (terminal.current) {
+          terminal.current.write('\r\n\x1b[1;31mConnection error. Please check console for details.\x1b[0m\r\n');
+        }
       };
     } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
       setIsConnected(false);
       setIsConnecting(false);
+      if (terminal.current) {
+        terminal.current.write(`\x1b[1;31mFailed to connect: ${error.message}\x1b[0m\r\n`);
+      }
     }
   };
 

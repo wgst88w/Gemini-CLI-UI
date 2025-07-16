@@ -45,7 +45,11 @@ async function spawnGemini(command, options = {}, ws) {
     }
     
     // Use cwd (actual project directory) instead of projectPath (Gemini's metadata directory)
-    const workingDir = cwd || process.cwd();
+    // Debug - cwd and projectPath
+    // Clean the path by removing any non-printable characters
+    const cleanPath = (cwd || process.cwd()).replace(/[^\x20-\x7E]/g, '').trim();
+    const workingDir = cleanPath;
+    // Debug - workingDir
     
     // Handle images by saving them to temporary files and passing paths to Gemini
     const tempImagePaths = [];
@@ -61,7 +65,7 @@ async function spawnGemini(command, options = {}, ws) {
           // Extract base64 data and mime type
           const matches = image.data.match(/^data:([^;]+);base64,(.+)$/);
           if (!matches) {
-            console.error('Invalid image data format');
+            // console.error('Invalid image data format');
             continue;
           }
           
@@ -93,7 +97,7 @@ async function spawnGemini(command, options = {}, ws) {
         
         
       } catch (error) {
-        console.error('Error processing images for Gemini:', error);
+        // console.error('Error processing images for Gemini:', error);
       }
     }
     
@@ -172,10 +176,11 @@ async function spawnGemini(command, options = {}, ws) {
       // MCP config check failed, proceeding without MCP support
     }
     
-    // Add model for new sessions
-    if (!resume) {
-      args.push('--model', options.model || 'gemini-2.5-pro');
-    }
+    // Add model for all sessions (both new and resumed)
+    // Debug - Model from options and resume session
+    const modelToUse = options.model || 'gemini-2.5-flash';
+    // Debug - Using model
+    args.push('--model', modelToUse);
     
     // Add --yolo flag if skipPermissions is enabled
     if (settings.skipPermissions) {
@@ -186,10 +191,14 @@ async function spawnGemini(command, options = {}, ws) {
     // Gemini doesn't support these tool permission flags
     // Skip all tool settings
     
-    console.log('Spawning Gemini CLI with args:', args);
-    console.log('Working directory:', workingDir);
+    // console.log('Spawning Gemini CLI with args:', args);
+    // console.log('Working directory:', workingDir);
     
-    const geminiProcess = spawn('gemini', args, {
+    // Try to find gemini in PATH first, then fall back to environment variable
+    const geminiPath = process.env.GEMINI_PATH || 'gemini';
+    // console.log('Full command:', geminiPath, args.join(' '));
+    
+    const geminiProcess = spawn(geminiPath, args, {
       cwd: workingDir,
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env } // Inherit all environment variables
@@ -202,6 +211,27 @@ async function spawnGemini(command, options = {}, ws) {
     // Store process reference for potential abort
     const processKey = capturedSessionId || sessionId || Date.now().toString();
     activeGeminiProcesses.set(processKey, geminiProcess);
+    // Debug - Stored Gemini process with key
+    
+    // Store sessionId on the process object for debugging
+    geminiProcess.sessionId = processKey;
+    
+    // Close stdin to signal we're done sending input
+    geminiProcess.stdin.end();
+    
+    // Add timeout handler
+    let hasReceivedOutput = false;
+    const timeoutMs = 30000; // 30 seconds
+    const timeout = setTimeout(() => {
+      if (!hasReceivedOutput) {
+        // console.error('⏰ Gemini CLI timeout - no output received after', timeoutMs, 'ms');
+        ws.send(JSON.stringify({
+          type: 'gemini-error',
+          error: 'Gemini CLI timeout - no response received'
+        }));
+        geminiProcess.kill('SIGTERM');
+      }
+    }, timeoutMs);
     
     // Save user message to session when starting
     if (command && capturedSessionId) {
@@ -214,6 +244,9 @@ async function spawnGemini(command, options = {}, ws) {
     geminiProcess.stdout.on('data', (data) => {
       const rawOutput = data.toString();
       outputBuffer += rawOutput;
+      // Debug - Raw Gemini stdout
+      hasReceivedOutput = true;
+      clearTimeout(timeout);
       
       // Filter out debug messages and system messages
       const lines = rawOutput.split('\n');
@@ -232,7 +265,7 @@ async function spawnGemini(command, options = {}, ws) {
       const filteredOutput = filteredLines.join('\n').trim();
       
       if (filteredOutput) {
-        console.log('📤 Gemini response:', filteredOutput);
+        // Debug - Gemini response
         
         // Accumulate the full response
         fullResponse += (fullResponse ? '\n' : '') + filteredOutput;
@@ -276,17 +309,18 @@ async function spawnGemini(command, options = {}, ws) {
     // Handle stderr
     geminiProcess.stderr.on('data', (data) => {
       const errorMsg = data.toString();
+      // Debug - Raw Gemini stderr
       
       // Filter out deprecation warnings
       if (errorMsg.includes('[DEP0040]') || 
           errorMsg.includes('DeprecationWarning') ||
           errorMsg.includes('--trace-deprecation')) {
         // Log but don't send to client
-        console.log('Gemini CLI warning (suppressed):', errorMsg.trim());
+        // Debug - Gemini CLI warning (suppressed)
         return;
       }
       
-      console.error('Gemini CLI stderr:', errorMsg);
+      // console.error('Gemini CLI stderr:', errorMsg);
       ws.send(JSON.stringify({
         type: 'gemini-error',
         error: errorMsg
@@ -295,7 +329,8 @@ async function spawnGemini(command, options = {}, ws) {
     
     // Handle process completion
     geminiProcess.on('close', async (code) => {
-      console.log(`Gemini CLI process exited with code ${code}`);
+      // console.log(`Gemini CLI process exited with code ${code}`);
+      clearTimeout(timeout);
       
       // Clean up process reference
       const finalSessionId = capturedSessionId || sessionId || processKey;
@@ -316,12 +351,12 @@ async function spawnGemini(command, options = {}, ws) {
       if (geminiProcess.tempImagePaths && geminiProcess.tempImagePaths.length > 0) {
         for (const imagePath of geminiProcess.tempImagePaths) {
           await fs.unlink(imagePath).catch(err => 
-            console.error(`Failed to delete temp image ${imagePath}:`, err)
+            // console.error(`Failed to delete temp image ${imagePath}:`, err)
           );
         }
         if (geminiProcess.tempDir) {
           await fs.rm(geminiProcess.tempDir, { recursive: true, force: true }).catch(err => 
-            console.error(`Failed to delete temp directory ${geminiProcess.tempDir}:`, err)
+            // console.error(`Failed to delete temp directory ${geminiProcess.tempDir}:`, err)
           );
         }
       }
@@ -335,7 +370,7 @@ async function spawnGemini(command, options = {}, ws) {
     
     // Handle process errors
     geminiProcess.on('error', (error) => {
-      console.error('Gemini CLI process error:', error);
+      // console.error('Gemini CLI process error:', error);
       
       // Clean up process reference on error
       const finalSessionId = capturedSessionId || sessionId || processKey;
@@ -362,13 +397,52 @@ async function spawnGemini(command, options = {}, ws) {
 }
 
 function abortGeminiSession(sessionId) {
-  const process = activeGeminiProcesses.get(sessionId);
-  if (process) {
-    console.log(`🛑 Aborting Gemini session: ${sessionId}`);
-    process.kill('SIGTERM');
-    activeGeminiProcesses.delete(sessionId);
-    return true;
+  // Debug - Attempting to abort Gemini session
+  // Debug - Active processes
+  
+  // Try to find the process by session ID or any key that contains the session ID
+  let process = activeGeminiProcesses.get(sessionId);
+  let processKey = sessionId;
+  
+  if (!process) {
+    // Search for process with matching session ID in keys
+    for (const [key, proc] of activeGeminiProcesses.entries()) {
+      if (key.includes(sessionId) || sessionId.includes(key)) {
+        process = proc;
+        processKey = key;
+        break;
+      }
+    }
   }
+  
+  if (process) {
+    // Debug - Found process for session
+    try {
+      // First try SIGTERM
+      process.kill('SIGTERM');
+      
+      // Set a timeout to force kill if process doesn't exit
+      setTimeout(() => {
+        if (activeGeminiProcesses.has(processKey)) {
+          // Debug - Process didn't terminate, forcing kill
+          try {
+            process.kill('SIGKILL');
+          } catch (e) {
+            // console.error('Error force killing process:', e);
+          }
+        }
+      }, 2000); // Wait 2 seconds before force kill
+      
+      activeGeminiProcesses.delete(processKey);
+      return true;
+    } catch (error) {
+      // console.error('Error killing process:', error);
+      activeGeminiProcesses.delete(processKey);
+      return false;
+    }
+  }
+  
+  // Debug - No process found for session
   return false;
 }
 

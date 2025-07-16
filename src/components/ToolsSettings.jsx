@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
-import { X, Plus, Settings, Shield, AlertTriangle, Moon, Sun, Server, Edit3, Trash2, Play, Globe, Terminal, Zap } from 'lucide-react';
+import { X, Plus, Settings, Shield, AlertTriangle, Moon, Sun, Server, Edit3, Trash2, Play, Globe, Terminal, Zap, Volume2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 function ToolsSettings({ isOpen, onClose }) {
@@ -42,7 +42,8 @@ function ToolsSettings({ isOpen, onClose }) {
   const [mcpServerTools, setMcpServerTools] = useState({});
   const [mcpToolsLoading, setMcpToolsLoading] = useState({});
   const [activeTab, setActiveTab] = useState('tools');
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-pro');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [enableNotificationSound, setEnableNotificationSound] = useState(false);
 
   // Common tool patterns
   const commonTools = [
@@ -62,18 +63,18 @@ function ToolsSettings({ isOpen, onClose }) {
     'WebSearch'
   ];
   
-  // Available Gemini models
+  // Available Gemini models (tested and verified)
   const availableModels = [
-    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Most advanced model with superior capabilities' },
-    { value: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash (Experimental)', description: 'Latest experimental model with enhanced capabilities' },
-    { value: 'gemini-2.0-flash-thinking-exp-1219', label: 'Gemini 2.0 Flash Thinking (1219)', description: 'Thinking model for complex reasoning' },
-    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', description: 'Stable production model' },
-    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Fast and efficient model' }
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Fast and efficient latest model (Recommended)' },
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Most advanced model (Note: May have quota limits)' }
   ];
 
   // MCP API functions
   const fetchMcpServers = async () => {
     try {
+      // MCP endpoints are not implemented yet - skip these calls
+      return;
+      
       const token = localStorage.getItem('auth-token');
       
       // First try to get servers using Gemini CLI
@@ -121,10 +122,10 @@ function ToolsSettings({ isOpen, onClose }) {
         const data = await response.json();
         setMcpServers(data.servers || []);
       } else {
-        console.error('Failed to fetch MCP servers');
+        // console.error('Failed to fetch MCP servers');
       }
     } catch (error) {
-      console.error('Error fetching MCP servers:', error);
+      // console.error('Error fetching MCP servers:', error);
     }
   };
 
@@ -168,7 +169,7 @@ function ToolsSettings({ isOpen, onClose }) {
         throw new Error(error.error || 'Failed to save server');
       }
     } catch (error) {
-      console.error('Error saving MCP server:', error);
+      // console.error('Error saving MCP server:', error);
       throw error;
     }
   };
@@ -199,7 +200,7 @@ function ToolsSettings({ isOpen, onClose }) {
         throw new Error(error.error || 'Failed to delete server');
       }
     } catch (error) {
-      console.error('Error deleting MCP server:', error);
+      // console.error('Error deleting MCP server:', error);
       throw error;
     }
   };
@@ -223,7 +224,7 @@ function ToolsSettings({ isOpen, onClose }) {
         throw new Error(error.error || 'Failed to test server');
       }
     } catch (error) {
-      console.error('Error testing MCP server:', error);
+      // console.error('Error testing MCP server:', error);
       throw error;
     }
   };
@@ -248,7 +249,7 @@ function ToolsSettings({ isOpen, onClose }) {
         throw new Error(error.error || 'Failed to test configuration');
       }
     } catch (error) {
-      console.error('Error testing MCP configuration:', error);
+      // console.error('Error testing MCP configuration:', error);
       throw error;
     }
   };
@@ -272,7 +273,7 @@ function ToolsSettings({ isOpen, onClose }) {
         throw new Error(error.error || 'Failed to discover tools');
       }
     } catch (error) {
-      console.error('Error discovering MCP tools:', error);
+      // console.error('Error discovering MCP tools:', error);
       throw error;
     }
   };
@@ -295,7 +296,8 @@ function ToolsSettings({ isOpen, onClose }) {
         setDisallowedTools(settings.disallowedTools || []);
         setSkipPermissions(settings.skipPermissions || false);
         setProjectSortOrder(settings.projectSortOrder || 'name');
-        setSelectedModel(settings.selectedModel || 'gemini-2.5-pro');
+        setSelectedModel(settings.selectedModel || 'gemini-2.5-flash');
+        setEnableNotificationSound(settings.enableNotificationSound || false);
       } else {
         // Set defaults
         setAllowedTools([]);
@@ -307,7 +309,7 @@ function ToolsSettings({ isOpen, onClose }) {
       // Load MCP servers from API
       await fetchMcpServers();
     } catch (error) {
-      console.error('Error loading tool settings:', error);
+      // console.error('Error loading tool settings:', error);
       // Set defaults on error
       setAllowedTools([]);
       setDisallowedTools([]);
@@ -327,6 +329,7 @@ function ToolsSettings({ isOpen, onClose }) {
         skipPermissions,
         projectSortOrder,
         selectedModel,
+        enableNotificationSound,
         lastUpdated: new Date().toISOString()
       };
       
@@ -349,7 +352,7 @@ function ToolsSettings({ isOpen, onClose }) {
         onClose();
       }, 1000);
     } catch (error) {
-      console.error('Error saving tool settings:', error);
+      // console.error('Error saving tool settings:', error);
       setSaveStatus('error');
     } finally {
       setIsSaving(false);
@@ -702,6 +705,55 @@ function ToolsSettings({ isOpen, onClose }) {
                     </div>
                   </div>
                 </label>
+              </div>
+            </div>
+
+            {/* Notification Sound Settings */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Volume2 className="w-5 h-5 text-blue-500" />
+                <h3 className="text-lg font-medium text-foreground">
+                  Notification Settings
+                </h3>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={enableNotificationSound}
+                      onChange={(e) => setEnableNotificationSound(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="font-medium text-blue-900 dark:text-blue-100">
+                        Enable notification sound
+                      </div>
+                      <div className="text-sm text-blue-700 dark:text-blue-300">
+                        Play a sound when Gemini responds
+                      </div>
+                    </div>
+                  </label>
+                  {enableNotificationSound && (
+                    <button
+                      onClick={async () => {
+                        const { playNotificationSound } = await import('../utils/notificationSound');
+                        // Temporarily enable sound for testing
+                        const currentSettings = JSON.parse(localStorage.getItem('gemini-tools-settings') || '{}');
+                        localStorage.setItem('gemini-tools-settings', JSON.stringify({
+                          ...currentSettings,
+                          enableNotificationSound: true
+                        }));
+                        playNotificationSound();
+                        // Restore original settings
+                        localStorage.setItem('gemini-tools-settings', JSON.stringify(currentSettings));
+                      }}
+                      className="ml-7 px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                    >
+                      Test Sound
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 

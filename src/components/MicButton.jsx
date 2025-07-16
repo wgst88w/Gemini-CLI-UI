@@ -38,7 +38,7 @@ export function MicButton({ onTranscript, className = '' }) {
   // Start recording
   const startRecording = async () => {
     try {
-      console.log('Starting recording...');
+      // console.log('Starting recording...');
       setError(null);
       chunksRef.current = [];
 
@@ -61,7 +61,7 @@ export function MicButton({ onTranscript, className = '' }) {
       };
 
       recorder.onstop = async () => {
-        console.log('Recording stopped, creating blob...');
+        // console.log('Recording stopped, creating blob...');
         const blob = new Blob(chunksRef.current, { type: mimeType });
         
         // Clean up stream
@@ -103,7 +103,7 @@ export function MicButton({ onTranscript, className = '' }) {
 
       recorder.start();
       setState('recording');
-      console.log('Recording started successfully');
+      // console.log('Recording started successfully');
     } catch (err) {
       console.error('Failed to start recording:', err);
       
@@ -129,13 +129,13 @@ export function MicButton({ onTranscript, className = '' }) {
 
   // Stop recording
   const stopRecording = () => {
-    console.log('Stopping recording...');
+    // console.log('Stopping recording...');
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
       // Don't set state here - let the onstop handler do it
     } else {
       // If recorder isn't in recording state, force cleanup
-      console.log('Recorder not in recording state, forcing cleanup');
+      // console.log('Recorder not in recording state, forcing cleanup');
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -160,12 +160,12 @@ export function MicButton({ onTranscript, className = '' }) {
     // Debounce for mobile double-tap issue
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
-      console.log('Ignoring rapid tap');
+      // console.log('Ignoring rapid tap');
       return;
     }
     lastTapRef.current = now;
     
-    console.log('Button clicked, current state:', state);
+    // console.log('Button clicked, current state:', state);
     
     if (state === 'idle') {
       startRecording();

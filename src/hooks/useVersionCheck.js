@@ -23,7 +23,7 @@ export const useVersionCheck = (owner, repo) => {
           setLatestVersion(null);
         }
       } catch (error) {
-        console.error('Version check failed:', error);
+        // console.error('Version check failed:', error);
         // On error, don't show update notification
         setUpdateAvailable(false);
         setLatestVersion(null);

@@ -25,6 +25,7 @@ import MainContent from './components/MainContent';
 import MobileNav from './components/MobileNav';
 import ToolsSettings from './components/ToolsSettings';
 import QuickSettingsPanel from './components/QuickSettingsPanel';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { useWebSocket } from './utils/websocket';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -489,7 +490,10 @@ function AppContent() {
             <button
               onClick={() => {
                 // Copy command to clipboard
-                navigator.clipboard.writeText('git checkout main && git pull && npm install');
+                navigator.clipboard.writeText('git checkout main && git pull && npm install')
+                  .catch(() => {
+                    // Silently fail if clipboard access is denied
+                  });
                 setShowVersionModal(false);
               }}
               className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
@@ -646,18 +650,20 @@ function AppContent() {
 // Root App component with router
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <ProtectedRoute>
-          <Router>
-            <Routes>
-              <Route path="/" element={<AppContent />} />
-              <Route path="/session/:sessionId" element={<AppContent />} />
-            </Routes>
-          </Router>
-        </ProtectedRoute>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <ProtectedRoute>
+            <Router>
+              <Routes>
+                <Route path="/" element={<AppContent />} />
+                <Route path="/session/:sessionId" element={<AppContent />} />
+              </Routes>
+            </Router>
+          </ProtectedRoute>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

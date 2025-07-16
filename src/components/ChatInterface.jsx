@@ -25,6 +25,7 @@ import GeminiLogo from './GeminiLogo.jsx';
 import GeminiStatus from './GeminiStatus';
 import { MicButton } from './MicButton.jsx';
 import { api } from '../utils/api';
+import { playNotificationSound } from '../utils/notificationSound';
 
 // Memoized message component to prevent unnecessary re-renders
 const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFileOpen, onShowSettings, autoExpandTools, showRawParameters }) => {
@@ -251,11 +252,11 @@ const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFile
                 })()}
                 {message.toolInput && message.toolName !== 'Edit' && (() => {
                   // Debug log to see what we're dealing with
-                  console.log('Tool display - name:', message.toolName, 'input type:', typeof message.toolInput);
+                  // Debug - Tool display
                   
                   // Special handling for Write tool
                   if (message.toolName === 'Write') {
-                    console.log('Write tool detected, toolInput:', message.toolInput);
+                    // Debug - Write tool detected
                     try {
                       let input;
                       // Handle both JSON string and already parsed object
@@ -265,7 +266,7 @@ const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFile
                         input = message.toolInput;
                       }
                       
-                      console.log('Parsed Write input:', input);
+                      // Debug - Parsed Write input
                       
                       if (input.file_path && input.content !== undefined) {
                         return (
@@ -923,9 +924,22 @@ const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFile
                 📋 Read todo list
               </div>
             ) : (
-              <div className="text-sm text-gray-700 dark:text-gray-300">
+              <div className={`text-sm ${message.type === 'error' ? 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800 relative' : 'text-gray-700 dark:text-gray-300'}`}>
+                {message.type === 'error' && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(message.content)
+                        .catch(() => {
+                          // Silently fail if clipboard access is denied
+                        });
+                    }}
+                    className="absolute top-2 right-2 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                  >
+                    Copy
+                  </button>
+                )}
                 {message.type === 'assistant' ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert prose-gray [&_code]:!bg-transparent [&_code]:!p-0">
+                  <div className={`prose prose-sm max-w-none dark:prose-invert prose-gray [&_code]:!bg-transparent [&_code]:!p-0 ${message.type === 'error' ? 'select-text cursor-text' : ''}`} style={{ contain: 'layout' }}>
                     <ReactMarkdown
                       components={{
                         code: ({node, inline, className, children, ...props}) => {
@@ -952,9 +966,9 @@ const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFile
                           </a>
                         ),
                         p: ({children}) => (
-                          <div className="mb-2 last:mb-0">
+                          <p className="mb-2 last:mb-0">
                             {children}
-                          </div>
+                          </p>
                         )
                       }}
                     >
@@ -962,7 +976,7 @@ const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFile
                     </ReactMarkdown>
                   </div>
                 ) : (
-                  <div className="whitespace-pre-wrap">
+                  <div className={`whitespace-pre-wrap ${message.type === 'error' ? 'select-all cursor-text pr-16' : ''}`}>
                     {message.content}
                   </div>
                 )}
@@ -1039,7 +1053,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
     return [];
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState(selectedSession?.id || null);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [sessionMessages, setSessionMessages] = useState([]);
   const [isYoloMode, setIsYoloMode] = useState(() => {
@@ -1053,9 +1067,9 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
   const [selectedModel, setSelectedModel] = useState(() => {
     try {
       const settings = JSON.parse(localStorage.getItem('gemini-tools-settings') || '{}');
-      return settings.selectedModel || 'gemini-2.5-pro';
+      return settings.selectedModel || 'gemini-2.5-flash';
     } catch (e) {
-      return 'gemini-2.5-pro';
+      return 'gemini-2.5-flash';
     }
   });
   const [isLoadingSessionMessages, setIsLoadingSessionMessages] = useState(false);
@@ -1119,7 +1133,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
       const data = await response.json();
       return data.messages || [];
     } catch (error) {
-      console.error('Error loading session messages:', error);
+      // console.error('Error loading session messages:', error);
       return [];
     } finally {
       setIsLoadingSessionMessages(false);
@@ -1264,9 +1278,18 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
   }, [sessionMessages]);
 
   // Define scroll functions early to avoid hoisting issues in useEffect dependencies
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback((instant = false) => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      if (instant) {
+        scrollContainerRef.current.classList.add('scroll-instant');
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        // Remove instant class after scroll
+        requestAnimationFrame(() => {
+          scrollContainerRef.current?.classList.remove('scroll-instant');
+        });
+      } else {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
       setIsUserScrolledUp(false);
     }
   }, []);
@@ -1287,35 +1310,57 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
     }
   }, [isNearBottom]);
 
+  // Track previous session ID using useRef to properly detect session changes
+  const previousSessionIdRef = useRef(null);
+  
   useEffect(() => {
     // Load session messages when session changes
     const loadMessages = async () => {
       if (selectedSession && selectedProject) {
-        setCurrentSessionId(selectedSession.id);
+        // Check if this is actually a different session
+        const isNewSession = previousSessionIdRef.current !== selectedSession.id;
         
-        // Only load messages from API if this is a user-initiated session change
-        // For system-initiated changes, preserve existing messages and rely on WebSocket
-        if (!isSystemSessionChange) {
-          const messages = await loadSessionMessages(selectedProject.name, selectedSession.id);
-          setSessionMessages(messages);
-          // convertedMessages will be automatically updated via useMemo
-          // Scroll to bottom after loading session messages if auto-scroll is enabled
-          if (autoScrollToBottom) {
-            setTimeout(() => scrollToBottom(), 200);
+        if (isNewSession) {
+          // console.log('Loading messages for session:', selectedSession.id, 'previous:', previousSessionIdRef.current);
+          previousSessionIdRef.current = selectedSession.id;
+          setCurrentSessionId(selectedSession.id);
+          
+          // Only load messages from API if this is a user-initiated session change
+          // For system-initiated changes, preserve existing messages and rely on WebSocket
+          if (!isSystemSessionChange) {
+            // Clear existing messages immediately to show loading state
+            setChatMessages([]);
+            setSessionMessages([]);
+            
+            setIsLoadingSessionMessages(true);
+            try {
+              const messages = await loadSessionMessages(selectedProject.name, selectedSession.id);
+              setSessionMessages(messages);
+              // convertedMessages will be automatically updated via useMemo
+              // Scroll to bottom after loading session messages if auto-scroll is enabled
+              if (autoScrollToBottom) {
+                setTimeout(() => scrollToBottom(), 200);
+              }
+            } catch (error) {
+              // console.error('Failed to load session messages:', error);
+            } finally {
+              setIsLoadingSessionMessages(false);
+            }
+          } else {
+            // Reset the flag after handling system session change
+            setIsSystemSessionChange(false);
           }
-        } else {
-          // Reset the flag after handling system session change
-          setIsSystemSessionChange(false);
         }
       } else {
         setChatMessages([]);
         setSessionMessages([]);
         setCurrentSessionId(null);
+        previousSessionIdRef.current = null;
       }
     };
     
     loadMessages();
-  }, [selectedSession, selectedProject, loadSessionMessages, scrollToBottom, isSystemSessionChange]);
+  }, [selectedSession, selectedProject, loadSessionMessages, scrollToBottom, isSystemSessionChange, autoScrollToBottom]);
 
   // Update chatMessages when convertedMessages changes
   useEffect(() => {
@@ -1364,10 +1409,10 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
       try {
         const settings = JSON.parse(localStorage.getItem('gemini-tools-settings') || '{}');
         setIsYoloMode(settings.skipPermissions || false);
-        setSelectedModel(settings.selectedModel || 'gemini-2.5-pro');
+        setSelectedModel(settings.selectedModel || 'gemini-2.5-flash');
       } catch (e) {
         setIsYoloMode(false);
-        setSelectedModel('gemini-2.5-pro');
+        setSelectedModel('gemini-2.5-flash');
       }
     };
     
@@ -1403,6 +1448,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
     // Handle WebSocket messages
     if (messages.length > 0) {
       const latestMessage = messages[messages.length - 1];
+      // console.log('Received WebSocket message:', latestMessage.type, latestMessage);
       
       switch (latestMessage.type) {
         case 'session-created':
@@ -1433,10 +1479,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
               currentSessionId && 
               latestMessage.data.session_id !== currentSessionId) {
             
-            console.log('🔄 Gemini CLI session duplication detected:', {
-              originalSession: currentSessionId,
-              newSession: latestMessage.data.session_id
-            });
+            // Debug - Gemini CLI session duplication detected
             
             // Mark this as a system-initiated session change to preserve messages
             setIsSystemSessionChange(true);
@@ -1455,9 +1498,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
               latestMessage.data.session_id && 
               !currentSessionId) {
             
-            console.log('🔄 New session init detected:', {
-              newSession: latestMessage.data.session_id
-            });
+            // Debug - New session init detected
             
             // Mark this as a system-initiated session change to preserve messages
             setIsSystemSessionChange(true);
@@ -1475,7 +1516,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
               latestMessage.data.session_id && 
               currentSessionId && 
               latestMessage.data.session_id === currentSessionId) {
-            console.log('🔄 System init message for current session, ignoring');
+            // Debug - System init message for current session, ignoring
             return; // Don't process the message further
           }
           
@@ -1554,18 +1595,25 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
           break;
 
         case 'gemini-error':
+          // console.log('Gemini error, setting isLoading to false:', latestMessage.error);
           setChatMessages(prev => [...prev, {
             type: 'error',
             content: `Error: ${latestMessage.error}`,
             timestamp: new Date()
           }]);
+          setIsLoading(false);
+          setCanAbortSession(false);
+          setGeminiStatus(null);
           break;
           
         case 'gemini-complete':
+          // console.log('Gemini completed, setting isLoading to false');
           setIsLoading(false);
           setCanAbortSession(false);
           setGeminiStatus(null);
 
+          // Play notification sound when response is complete
+          playNotificationSound();
           
           // Session Protection: Mark session as inactive to re-enable automatic project updates
           // Conversation is complete, safe to allow project updates again
@@ -1608,7 +1656,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
 
         case 'gemini-status':
           // Handle Gemini working status messages
-          console.log('🔔 Received gemini-status message:', latestMessage);
+          // Debug - Received gemini-status message
           const statusData = latestMessage.data;
           if (statusData) {
             // Parse the status message to extract relevant information
@@ -1639,7 +1687,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
               statusInfo.can_interrupt = statusData.can_interrupt;
             }
             
-            console.log('📊 Setting claude status:', statusInfo);
+            // Debug - Setting claude status
             setGeminiStatus(statusInfo);
             setIsLoading(true);
             setCanAbortSession(statusInfo.can_interrupt);
@@ -1667,7 +1715,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
         setFileList(flatFiles);
       }
     } catch (error) {
-      console.error('Error fetching files:', error);
+      // console.error('Error fetching files:', error);
     }
   };
 
@@ -1776,7 +1824,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
       // Always scroll to bottom when messages first load (user expects to see latest)
       // Also reset scroll state
       setIsUserScrolledUp(false);
-      setTimeout(() => scrollToBottom(), 200); // Longer delay to ensure full rendering
+      setTimeout(() => scrollToBottom(true), 200); // Instant scroll on initial load
     }
   }, [chatMessages.length > 0, scrollToBottom]); // Trigger when messages first appear
 
@@ -1923,7 +1971,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
         const result = await response.json();
         uploadedImages = result.images;
       } catch (error) {
-        console.error('Image upload failed:', error);
+        // console.error('Image upload failed:', error);
         setChatMessages(prev => [...prev, {
           type: 'error',
           content: `Failed to upload images: ${error.message}`,
@@ -1941,6 +1989,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
     };
 
     setChatMessages(prev => [...prev, userMessage]);
+    // console.log('Setting isLoading to true after sending message');
     setIsLoading(true);
     setCanAbortSession(true);
     // Set a default status when starting
@@ -1974,17 +2023,17 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
             allowedTools: settings.allowedTools || [],
             disallowedTools: settings.disallowedTools || [],
             skipPermissions: settings.skipPermissions || false,
-            selectedModel: settings.selectedModel || 'gemini-2.5-pro'
+            selectedModel: settings.selectedModel || 'gemini-2.5-flash'
           };
         }
       } catch (error) {
-        console.error('Error loading tools settings:', error);
+        // console.error('Error loading tools settings:', error);
       }
       return {
         allowedTools: [],
         disallowedTools: [],
         skipPermissions: false,
-        selectedModel: 'gemini-2.5-pro'
+        selectedModel: 'gemini-2.5-flash'
       };
     };
 
@@ -1996,12 +2045,12 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
       command: input,
       options: {
         projectPath: selectedProject.path,
-        cwd: selectedProject.fullPath,
+        cwd: selectedProject.path,
         sessionId: currentSessionId,
         resume: !!currentSessionId,
         toolsSettings: toolsSettings,
         permissionMode: permissionMode,
-        model: toolsSettings.selectedModel || 'gemini-2.5-pro',
+        model: toolsSettings.selectedModel || 'gemini-2.5-flash',
         images: uploadedImages // Pass images to backend
       }
     });
@@ -2232,7 +2281,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
               
               return (
                 <MessageComponent
-                  key={index}
+                  key={`${message.id || index}-${message.timestamp}`}
                   message={message}
                   index={index}
                   prevMessage={prevMessage}

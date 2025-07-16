@@ -20,17 +20,17 @@ try {
     }
   });
 } catch (e) {
-  console.log('No .env file found or error reading it:', e.message);
+  // console.log('No .env file found or error reading it:', e.message);
 }
 
-console.log('PORT from env:', process.env.PORT);
+// console.log('PORT from env:', process.env.PORT);
 
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import http from 'http';
 import cors from 'cors';
 import { promises as fsPromises } from 'fs';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import os from 'os';
 import pty from 'node-pty';
 import fetch from 'node-fetch';
@@ -109,7 +109,7 @@ async function setupProjectsWatcher() {
           });
           
         } catch (error) {
-          console.error('❌ Error handling project changes:', error);
+          // console.error('❌ Error handling project changes:', error);
         }
       }, 300); // 300ms debounce (slightly faster than before)
     };
@@ -122,13 +122,13 @@ async function setupProjectsWatcher() {
       .on('addDir', (dirPath) => debouncedUpdate('addDir', dirPath))
       .on('unlinkDir', (dirPath) => debouncedUpdate('unlinkDir', dirPath))
       .on('error', (error) => {
-        console.error('❌ Chokidar watcher error:', error);
+        // console.error('❌ Chokidar watcher error:', error);
       })
       .on('ready', () => {
       });
     
   } catch (error) {
-    console.error('❌ Failed to setup projects watcher:', error);
+    // console.error('❌ Failed to setup projects watcher:', error);
   }
 }
 
@@ -140,7 +140,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ 
   server,
   verifyClient: (info) => {
-    console.log('WebSocket connection attempt to:', info.req.url);
+    // console.log('WebSocket connection attempt to:', info.req.url);
     
     // Extract token from query parameters or headers
     const url = new URL(info.req.url, 'http://localhost');
@@ -150,13 +150,13 @@ const wss = new WebSocketServer({
     // Verify token
     const user = authenticateWebSocket(token);
     if (!user) {
-      console.log('❌ WebSocket authentication failed');
+      // console.log('❌ WebSocket authentication failed');
       return false;
     }
     
     // Store user info in the request for later use
     info.req.user = user;
-    console.log('✅ WebSocket authenticated for user:', user.username);
+    // console.log('✅ WebSocket authenticated for user:', user.username);
     return true;
   }
 });
@@ -184,7 +184,7 @@ app.get('/api/config', authenticateToken, (req, res) => {
   const host = req.headers.host || `${req.hostname}:${PORT}`;
   const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'wss' : 'ws';
   
-  console.log('Config API called - Returning host:', host, 'Protocol:', protocol);
+  // console.log('Config API called - Returning host:', host, 'Protocol:', protocol);
   
   res.json({
     serverPort: PORT,
@@ -278,7 +278,7 @@ app.post('/api/projects/create', authenticateToken, async (req, res) => {
     const project = await addProjectManually(projectPath.trim());
     res.json({ success: true, project });
   } catch (error) {
-    console.error('Error creating project:', error);
+    // console.error('Error creating project:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -289,7 +289,7 @@ app.get('/api/projects/:projectName/file', authenticateToken, async (req, res) =
     const { projectName } = req.params;
     const { filePath } = req.query;
     
-    console.log('📄 File read request:', projectName, filePath);
+    // console.log('📄 File read request:', projectName, filePath);
     
     // Using fsPromises from import
     
@@ -301,7 +301,7 @@ app.get('/api/projects/:projectName/file', authenticateToken, async (req, res) =
     const content = await fsPromises.readFile(filePath, 'utf8');
     res.json({ content, path: filePath });
   } catch (error) {
-    console.error('Error reading file:', error);
+    // console.error('Error reading file:', error);
     if (error.code === 'ENOENT') {
       res.status(404).json({ error: 'File not found' });
     } else if (error.code === 'EACCES') {
@@ -318,7 +318,7 @@ app.get('/api/projects/:projectName/files/content', authenticateToken, async (re
     const { projectName } = req.params;
     const { path: filePath } = req.query;
     
-    console.log('🖼️ Binary file serve request:', projectName, filePath);
+    // console.log('🖼️ Binary file serve request:', projectName, filePath);
     
     // Using fs from import
     // Using mime from import
@@ -344,14 +344,14 @@ app.get('/api/projects/:projectName/files/content', authenticateToken, async (re
     fileStream.pipe(res);
     
     fileStream.on('error', (error) => {
-      console.error('Error streaming file:', error);
+      // console.error('Error streaming file:', error);
       if (!res.headersSent) {
         res.status(500).json({ error: 'Error reading file' });
       }
     });
     
   } catch (error) {
-    console.error('Error serving binary file:', error);
+    // console.error('Error serving binary file:', error);
     if (!res.headersSent) {
       res.status(500).json({ error: error.message });
     }
@@ -364,7 +364,7 @@ app.put('/api/projects/:projectName/file', authenticateToken, async (req, res) =
     const { projectName } = req.params;
     const { filePath, content } = req.body;
     
-    console.log('💾 File save request:', projectName, filePath);
+    // console.log('💾 File save request:', projectName, filePath);
     
     // Using fsPromises from import
     
@@ -381,9 +381,9 @@ app.put('/api/projects/:projectName/file', authenticateToken, async (req, res) =
     try {
       const backupPath = filePath + '.backup.' + Date.now();
       await fsPromises.copyFile(filePath, backupPath);
-      console.log('📋 Created backup:', backupPath);
+      // console.log('📋 Created backup:', backupPath);
     } catch (backupError) {
-      console.warn('Could not create backup:', backupError.message);
+      // console.warn('Could not create backup:', backupError.message);
     }
     
     // Write the new content
@@ -395,7 +395,7 @@ app.put('/api/projects/:projectName/file', authenticateToken, async (req, res) =
       message: 'File saved successfully' 
     });
   } catch (error) {
-    console.error('Error saving file:', error);
+    // console.error('Error saving file:', error);
     if (error.code === 'ENOENT') {
       res.status(404).json({ error: 'File or directory not found' });
     } else if (error.code === 'EACCES') {
@@ -416,7 +416,7 @@ app.get('/api/projects/:projectName/files', authenticateToken, async (req, res) 
     try {
       actualPath = await extractProjectDirectory(req.params.projectName);
     } catch (error) {
-      console.error('Error extracting project directory:', error);
+      // console.error('Error extracting project directory:', error);
       // Fallback to simple dash replacement
       actualPath = req.params.projectName.replace(/-/g, '/');
     }
@@ -432,7 +432,7 @@ app.get('/api/projects/:projectName/files', authenticateToken, async (req, res) 
     const hiddenFiles = files.filter(f => f.name.startsWith('.'));
     res.json(files);
   } catch (error) {
-    console.error('❌ File tree error:', error.message);
+    // console.error('❌ File tree error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -440,7 +440,7 @@ app.get('/api/projects/:projectName/files', authenticateToken, async (req, res) 
 // WebSocket connection handler that routes based on URL path
 wss.on('connection', (ws, request) => {
   const url = request.url;
-  console.log('🔗 Client connected to:', url);
+  // console.log('🔗 Client connected to:', url);
   
   // Parse URL to get pathname without query parameters
   const urlObj = new URL(url, 'http://localhost');
@@ -451,14 +451,14 @@ wss.on('connection', (ws, request) => {
   } else if (pathname === '/ws') {
     handleChatConnection(ws);
   } else {
-    console.log('❌ Unknown WebSocket path:', pathname);
+    // console.log('❌ Unknown WebSocket path:', pathname);
     ws.close();
   }
 });
 
 // Handle chat WebSocket connections
 function handleChatConnection(ws) {
-  console.log('💬 Chat WebSocket connected');
+  // console.log('💬 Chat WebSocket connected');
   
   // Add to connected clients for project updates
   connectedClients.add(ws);
@@ -468,12 +468,12 @@ function handleChatConnection(ws) {
       const data = JSON.parse(message);
       
       if (data.type === 'gemini-command') {
-        console.log('💬 User message:', data.command || '[Continue/Resume]');
-        console.log('📁 Project:', data.options?.projectPath || 'Unknown');
-        console.log('🔄 Session:', data.options?.sessionId ? 'Resume' : 'New');
+        // console.log('💬 User message:', data.command || '[Continue/Resume]');
+        // console.log('📁 Project:', data.options?.projectPath || 'Unknown');
+        // console.log('🔄 Session:', data.options?.sessionId ? 'Resume' : 'New');
         await spawnGemini(data.command, data.options, ws);
       } else if (data.type === 'abort-session') {
-        console.log('🛑 Abort session request:', data.sessionId);
+        // console.log('🛑 Abort session request:', data.sessionId);
         const success = abortGeminiSession(data.sessionId);
         ws.send(JSON.stringify({
           type: 'session-aborted',
@@ -482,7 +482,7 @@ function handleChatConnection(ws) {
         }));
       }
     } catch (error) {
-      console.error('❌ Chat WebSocket error:', error.message);
+      // console.error('❌ Chat WebSocket error:', error.message);
       ws.send(JSON.stringify({
         type: 'error',
         error: error.message
@@ -491,7 +491,7 @@ function handleChatConnection(ws) {
   });
   
   ws.on('close', () => {
-    console.log('🔌 Chat client disconnected');
+    // console.log('🔌 Chat client disconnected');
     // Remove from connected clients
     connectedClients.delete(ws);
   });
@@ -499,13 +499,13 @@ function handleChatConnection(ws) {
 
 // Handle shell WebSocket connections
 function handleShellConnection(ws) {
-  console.log('🐚 Shell client connected');
+  // console.log('🐚 Shell client connected');
   let shellProcess = null;
   
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
-      console.log('📨 Shell message received:', data.type);
+      // console.log('📨 Shell message received:', data.type);
       
       if (data.type === 'init') {
         // Initialize shell with project path and session info
@@ -525,12 +525,27 @@ function handleShellConnection(ws) {
         }));
         
         try {
+          // Get gemini command from environment or use default
+          const geminiPath = process.env.GEMINI_PATH || 'gemini';
+          
+          // First check if gemini CLI is available
+          try {
+            execSync(`which ${geminiPath}`, { stdio: 'ignore' });
+          } catch (error) {
+            // console.error('❌ Gemini CLI not found in PATH or GEMINI_PATH');
+            ws.send(JSON.stringify({
+              type: 'output',
+              data: `\r\n\x1b[31mError: Gemini CLI not found. Please check:\x1b[0m\r\n\x1b[33m1. Install gemini globally: npm install -g @google/generative-ai-cli\x1b[0m\r\n\x1b[33m2. Or set GEMINI_PATH in .env file\x1b[0m\r\n`
+            }));
+            return;
+          }
+          
           // Build shell command that changes to project directory first, then runs gemini
-          let geminiCommand = 'gemini';
+          let geminiCommand = geminiPath;
           
           if (hasSession && sessionId) {
             // Try to resume session, but with fallback to new session if it fails
-            geminiCommand = `gemini --resume ${sessionId} || gemini`;
+            geminiCommand = `${geminiPath} --resume ${sessionId} || ${geminiPath}`;
           }
           
           // Create shell command that cds to the project directory first
@@ -553,7 +568,7 @@ function handleShellConnection(ws) {
             }
           });
           
-          console.log('🟢 Shell process started with PTY, PID:', shellProcess.pid);
+          // console.log('🟢 Shell process started with PTY, PID:', shellProcess.pid);
           
           // Handle data output
           shellProcess.onData((data) => {
@@ -578,7 +593,7 @@ function handleShellConnection(ws) {
                 let match;
                 while ((match = pattern.exec(data)) !== null) {
                   const url = match[1];
-                  console.log('🔗 Detected URL for opening:', url);
+                  // console.log('🔗 Detected URL for opening:', url);
                   
                   // Send URL opening message to client
                   ws.send(JSON.stringify({
@@ -603,7 +618,7 @@ function handleShellConnection(ws) {
           
           // Handle process exit
           shellProcess.onExit((exitCode) => {
-            console.log('🔚 Shell process exited with code:', exitCode.exitCode, 'signal:', exitCode.signal);
+            // console.log('🔚 Shell process exited with code:', exitCode.exitCode, 'signal:', exitCode.signal);
             if (ws.readyState === ws.OPEN) {
               ws.send(JSON.stringify({
                 type: 'output',
@@ -614,7 +629,7 @@ function handleShellConnection(ws) {
           });
           
         } catch (spawnError) {
-          console.error('❌ Error spawning process:', spawnError);
+          // console.error('❌ Error spawning process:', spawnError);
           ws.send(JSON.stringify({
             type: 'output',
             data: `\r\n\x1b[31mError: ${spawnError.message}\x1b[0m\r\n`
@@ -627,20 +642,20 @@ function handleShellConnection(ws) {
           try {
             shellProcess.write(data.data);
           } catch (error) {
-            console.error('Error writing to shell:', error);
+            // console.error('Error writing to shell:', error);
           }
         } else {
-          console.warn('No active shell process to send input to');
+          // console.warn('No active shell process to send input to');
         }
       } else if (data.type === 'resize') {
         // Handle terminal resize
         if (shellProcess && shellProcess.resize) {
-          console.log('Terminal resize requested:', data.cols, 'x', data.rows);
+          // console.log('Terminal resize requested:', data.cols, 'x', data.rows);
           shellProcess.resize(data.cols, data.rows);
         }
       }
     } catch (error) {
-      console.error('❌ Shell WebSocket error:', error.message);
+      // console.error('❌ Shell WebSocket error:', error.message);
       if (ws.readyState === ws.OPEN) {
         ws.send(JSON.stringify({
           type: 'output',
@@ -651,15 +666,15 @@ function handleShellConnection(ws) {
   });
   
   ws.on('close', () => {
-    console.log('🔌 Shell client disconnected');
+    // console.log('🔌 Shell client disconnected');
     if (shellProcess && shellProcess.kill) {
-      console.log('🔴 Killing shell process:', shellProcess.pid);
+      // console.log('🔴 Killing shell process:', shellProcess.pid);
       shellProcess.kill();
     }
   });
   
   ws.on('error', (error) => {
-    console.error('❌ Shell WebSocket error:', error);
+    // console.error('❌ Shell WebSocket error:', error);
   });
 }
 // Audio transcription endpoint
@@ -794,19 +809,19 @@ Agent instructions:`;
           }
           
         } catch (gptError) {
-          console.error('GPT processing error:', gptError);
+          // console.error('GPT processing error:', gptError);
           // Fall back to original transcription if GPT fails
         }
         
         res.json({ text: transcribedText });
         
       } catch (error) {
-        console.error('Transcription error:', error);
+        // console.error('Transcription error:', error);
         res.status(500).json({ error: error.message });
       }
     });
   } catch (error) {
-    console.error('Endpoint error:', error);
+    // console.error('Endpoint error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -884,14 +899,14 @@ app.post('/api/projects/:projectName/upload-images', authenticateToken, async (r
         
         res.json({ images: processedImages });
       } catch (error) {
-        console.error('Error processing images:', error);
+        // console.error('Error processing images:', error);
         // Clean up any remaining files
         await Promise.all(req.files.map(f => fs.unlink(f.path).catch(() => {})));
         res.status(500).json({ error: 'Failed to process images' });
       }
     });
   } catch (error) {
-    console.error('Error in image upload endpoint:', error);
+    // console.error('Error in image upload endpoint:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -970,7 +985,7 @@ async function getFileTree(dirPath, maxDepth = 3, currentDepth = 0, showHidden =
   } catch (error) {
     // Only log non-permission errors to avoid spam
     if (error.code !== 'EACCES' && error.code !== 'EPERM') {
-      console.error('Error reading directory:', error);
+      // console.error('Error reading directory:', error);
     }
   }
   
@@ -989,16 +1004,16 @@ async function startServer() {
   try {
     // Initialize authentication database
     await initializeDatabase();
-    console.log('✅ Database initialization skipped (testing)');
+    // console.log('✅ Database initialization skipped (testing)');
     
     server.listen(PORT, '0.0.0.0', async () => {
-      console.log(`Gemini CLI UI server running on http://0.0.0.0:${PORT}`);
+      // console.log(`Gemini CLI UI server running on http://0.0.0.0:${PORT}`);
       
       // Start watching the projects folder for changes
       await setupProjectsWatcher(); // Re-enabled with better-sqlite3
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    // console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }

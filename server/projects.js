@@ -87,7 +87,14 @@ async function extractProjectDirectory(projectName) {
       // Fall back to decoded project name if no sessions
       // First try to decode from base64
       try {
-        extractedPath = Buffer.from(projectName.replace(/_/g, '+').replace(/-/g, '/'), 'base64').toString('utf8');
+        // Handle custom padding: __ at the end should be replaced with ==
+        let base64Name = projectName.replace(/_/g, '+').replace(/-/g, '/');
+        if (base64Name.endsWith('++')) {
+          base64Name = base64Name.slice(0, -2) + '==';
+        }
+        extractedPath = Buffer.from(base64Name, 'base64').toString('utf8');
+        // Clean the path by removing any non-printable characters
+        extractedPath = extractedPath.replace(/[^\x20-\x7E]/g, '').trim();
       } catch (e) {
         // If base64 decode fails, use old method
         extractedPath = projectName.replace(/-/g, '/');
@@ -161,16 +168,26 @@ async function extractProjectDirectory(projectName) {
       }
     }
     
+    // Clean the extracted path by removing any non-printable characters
+    extractedPath = extractedPath.replace(/[^\x20-\x7E]/g, '').trim();
+    
     // Cache the result
     projectDirectoryCache.set(projectName, extractedPath);
     
     return extractedPath;
     
   } catch (error) {
-    console.error(`Error extracting project directory for ${projectName}:`, error);
+    // console.error(`Error extracting project directory for ${projectName}:`, error);
     // Fall back to decoded project name
     try {
-      extractedPath = Buffer.from(projectName.replace(/_/g, '+').replace(/-/g, '/'), 'base64').toString('utf8');
+      // Handle custom padding: __ at the end should be replaced with ==
+      let base64Name = projectName.replace(/_/g, '+').replace(/-/g, '/');
+      if (base64Name.endsWith('++')) {
+        base64Name = base64Name.slice(0, -2) + '==';
+      }
+      extractedPath = Buffer.from(base64Name, 'base64').toString('utf8');
+      // Clean the path by removing any non-printable characters
+      extractedPath = extractedPath.replace(/[^\x20-\x7E]/g, '').trim();
     } catch (e) {
       extractedPath = projectName.replace(/-/g, '/');
     }
@@ -228,14 +245,14 @@ async function getProjects() {
             total: allSessions.length
           };
         } catch (e) {
-          console.warn(`Could not load sessions for project ${entry.name}:`, e.message);
+          // console.warn(`Could not load sessions for project ${entry.name}:`, e.message);
         }
         
         projects.push(project);
       }
     }
   } catch (error) {
-    console.error('Error reading projects directory:', error);
+    // console.error('Error reading projects directory:', error);
   }
   
   // Add manually configured projects that don't exist as folders yet
@@ -333,7 +350,7 @@ async function getSessions(projectName, limit = 5, offset = 0) {
       limit
     };
   } catch (error) {
-    console.error(`Error reading sessions for project ${projectName}:`, error);
+    // console.error(`Error reading sessions for project ${projectName}:`, error);
     return { sessions: [], hasMore: false, total: 0 };
   }
 }
@@ -348,7 +365,7 @@ async function parseJsonlSessions(filePath) {
       crlfDelay: Infinity
     });
     
-    // console.log(`[JSONL Parser] Reading file: ${filePath}`);
+    // Debug - [JSONL Parser] Reading file
     let lineCount = 0;
     
     for await (const line of rl) {
@@ -393,14 +410,14 @@ async function parseJsonlSessions(filePath) {
             }
           }
         } catch (parseError) {
-          console.warn(`[JSONL Parser] Error parsing line ${lineCount}:`, parseError.message);
+          // console.warn(`[JSONL Parser] Error parsing line ${lineCount}:`, parseError.message);
         }
       }
     }
     
-    // console.log(`[JSONL Parser] Processed ${lineCount} lines, found ${sessions.size} sessions`);
+    // Debug - [JSONL Parser] Processed lines and found sessions
   } catch (error) {
-    console.error('Error reading JSONL file:', error);
+    // console.error('Error reading JSONL file:', error);
   }
   
   // Convert Map to Array and sort by last activity
@@ -440,7 +457,7 @@ async function getSessionMessages(projectName, sessionId) {
               messages.push(entry);
             }
           } catch (parseError) {
-            console.warn('Error parsing line:', parseError.message);
+            // console.warn('Error parsing line:', parseError.message);
           }
         }
       }
@@ -451,7 +468,7 @@ async function getSessionMessages(projectName, sessionId) {
       new Date(a.timestamp || 0) - new Date(b.timestamp || 0)
     );
   } catch (error) {
-    console.error(`Error reading messages for session ${sessionId}:`, error);
+    // console.error(`Error reading messages for session ${sessionId}:`, error);
     return [];
   }
 }
@@ -521,7 +538,7 @@ async function deleteSession(projectName, sessionId) {
     
     throw new Error(`Session ${sessionId} not found in any files`);
   } catch (error) {
-    console.error(`Error deleting session ${sessionId} from project ${projectName}:`, error);
+    // console.error(`Error deleting session ${sessionId} from project ${projectName}:`, error);
     throw error;
   }
 }
@@ -532,7 +549,7 @@ async function isProjectEmpty(projectName) {
     const sessionsResult = await getSessions(projectName, 1, 0);
     return sessionsResult.total === 0;
   } catch (error) {
-    console.error(`Error checking if project ${projectName} is empty:`, error);
+    // console.error(`Error checking if project ${projectName} is empty:`, error);
     return false;
   }
 }
@@ -558,7 +575,7 @@ async function deleteProject(projectName) {
     
     return true;
   } catch (error) {
-    console.error(`Error deleting project ${projectName}:`, error);
+    // console.error(`Error deleting project ${projectName}:`, error);
     throw error;
   }
 }
@@ -611,7 +628,7 @@ async function addProjectManually(projectPath, displayName = null) {
   try {
     await fs.mkdir(projectDir, { recursive: true });
   } catch (error) {
-    console.error('Error creating project directory:', error);
+    // console.error('Error creating project directory:', error);
   }
   
   return {

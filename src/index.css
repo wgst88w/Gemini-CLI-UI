@@ -498,4 +498,48 @@
     outline: none;
     box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.3);
   }
+
+  /* Message layout stability */
+  .chat-message {
+    contain: layout style;
+    will-change: auto;
+  }
+
+  /* Prevent layout shift on initial render */
+  .chat-message .prose {
+    min-height: 1.5rem;
+  }
+
+  /* Stable rendering for markdown content */
+  .chat-message .prose p {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .chat-message .prose p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Prevent code block layout shift */
+  .chat-message .prose pre {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Disable transitions on initial load */
+  .chat-message:first-child,
+  .chat-message:first-child * {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+
+  /* Smooth scroll behavior */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* But instant for programmatic scrolls */
+  .scroll-instant {
+    scroll-behavior: auto !important;
+  }
 }
