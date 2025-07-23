@@ -1,30 +1,31 @@
-# ─── Stage 1: 前端打包 ───
+# ─── Stage 1: Build 前端 ───
 FROM node:20 AS build-frontend
 WORKDIR /app
 
-# 只複製依賴檔，加速快取
 COPY package*.json ./
 RUN npm install
 
-# 複製全部原始碼並執行前端打包
 COPY . .
 RUN npm run build
 
-# ─── Stage 2: 生產環境運行 ───
-FROM node:20-alpine
+# ─── Stage 2: 安裝生產環境依賴並運行 ───
+FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-# 從 build-frontend 階段取出打包好的靜態檔（位於 /app/dist）
-COPY --from=build-frontend /app/dist ./public
-
-# 複製後端程式與依賴
-COPY server/ ./server
+# 先複製 package.json 並安裝原生模組編譯所需工具，
+# 再安裝 production 依賴，最後移除編譯工具以瘦身映像
 COPY package*.json ./
-RUN npm install --only=production
+RUN apk add --no-cache \
+      python3 \
+      make \
+      g++ \
+    && npm install --only=production \
+    && apk del python3 make g++
 
-# 與程式內 process.env.PORT 保持一致
+# 複製前端打包結果與後端原始碼
+COPY --from=build-frontend /app/dist ./public
+COPY server/ ./server
+
 EXPOSE 4008
-
-# 啟動點
 CMD ["node", "server/index.js"]
