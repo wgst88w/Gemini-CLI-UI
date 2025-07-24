@@ -1,19 +1,10 @@
 FROM node:20-alpine AS build-frontend
 WORKDIR /app
 
-RUN echo "=== apk available ===" \
-    && which apk \
-    && cat /etc/os-release \
-    && echo "=== update repo & install python3 ===" \
-    && apk update \
-    && apk add --no-cache python3 make g++ \
-    && python3 --version \
-    && which python3
-    
 COPY package*.json ./
 RUN apk add --no-cache python3 make g++ \
-    && ln -sf /usr/bin/python3 /usr/bin/python \
-    && npm config set python /usr/bin/python3
+    && ln -sf /usr/bin/python3 /usr/bin/python
+ENV PYTHON=/usr/bin/python3
 
 RUN npm install
 COPY . .
@@ -26,8 +17,7 @@ ENV PYTHON=/usr/bin/python3
 
 COPY package*.json ./
 RUN apk add --no-cache python3 make g++ \
-    && ln -sf /usr/bin/python3 /usr/bin/python \
-    && npm config set python /usr/bin/python3
+    && ln -sf /usr/bin/python3 /usr/bin/python
 
 RUN npm install --omit=dev
 RUN apk del python3 make g++
