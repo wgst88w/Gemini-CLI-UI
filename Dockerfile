@@ -13,7 +13,7 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PYTHON=/usr/bin/python3  # <--- 強制 node-gyp 用這個 python
+ENV PYTHON=/usr/bin/python3
 
 COPY package*.json ./
 RUN apk add --no-cache python3 make g++ \
