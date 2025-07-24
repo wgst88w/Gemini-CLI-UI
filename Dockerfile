@@ -1,29 +1,19 @@
-# ─── Stage 1: Build 前端 ───
-FROM node:20 AS build-frontend
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
-# ─── Stage 2: 安裝生產環境依賴並運行 ───
+# ─── Stage 2: 生產環境映像 ───
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-# 先複製 package.json 並安裝原生模組編譯所需工具，
-# 再安裝 production 依賴，最後移除編譯工具以瘦身映像
+# 複製 package.json 並安裝 build-time 依賴
 COPY package*.json ./
-RUN apk add --no-cache \
+RUN apk add --no-cache --virtual .build-deps \
       python3 \
       make \
       g++ \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
     && npm install --only=production \
-    && apk del python3 make g++
+    && apk del .build-deps
 
-# 複製前端打包結果與後端原始碼
+# 複製前端產出與後端原始碼
 COPY --from=build-frontend /app/dist ./public
 COPY server/ ./server
 
