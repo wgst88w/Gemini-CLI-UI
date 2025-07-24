@@ -22,7 +22,7 @@ RUN apk add --no-cache python3 make g++ \
 RUN npm install --omit=dev
 RUN apk del python3 make g++
 
-COPY --from=build-frontend /app/dist ./public
+COPY --from=build-frontend /app/build ./public
 COPY server/ ./server
 
 EXPOSE 4008
