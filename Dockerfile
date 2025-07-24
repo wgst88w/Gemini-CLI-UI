@@ -10,7 +10,6 @@ RUN npm install --only=production
 
 COPY . .
 RUN npm run build
-
 # ───── Stage2: Runtime ─────
 FROM node:20-slim AS runtime
 WORKDIR /app
