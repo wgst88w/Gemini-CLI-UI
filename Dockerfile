@@ -1,19 +1,15 @@
-# ─── Stage 2: 生產環境映像 ───
-FROM node:20-alpine AS runtime
+FROM node:20 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-# 複製 package.json 並安裝 build-time 依賴
 COPY package*.json ./
-RUN apk add --no-cache --virtual .build-deps \
-      python3 \
-      make \
-      g++ \
+RUN apt-get update \
+    && apt-get install -y python3 make g++ \
     && ln -sf /usr/bin/python3 /usr/bin/python \
     && npm install --only=production \
-    && apk del .build-deps
+    && apt-get purge -y python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
-# 複製前端產出與後端原始碼
 COPY --from=build-frontend /app/dist ./public
 COPY server/ ./server
 
