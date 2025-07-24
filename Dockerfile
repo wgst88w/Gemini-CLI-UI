@@ -27,3 +27,5 @@ COPY server/ ./server
 
 EXPOSE 4008
 CMD ["node", "server/index.js"]
+
+RUN npm install -g @google/gemini-cli
